@@ -1,5 +1,4 @@
 <?php
-// includes/header.php
 require_once __DIR__ . '/auth.php';
 $u = current_user();
 ?>
@@ -74,11 +73,17 @@ $u = current_user();
       <h6>Menu</h6>
       <ul class="nav flex-column">
         <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/pages/dashboard.php">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/hewan.php">Hewan</a></li>
-        <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/monitoring.php">Monitoring Harian</a></li>
-        <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/reservasi.php">Reservasi</a></li>
-        <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/pelanggan.php">Pelanggan</a></li>
-        <?php if ($u['peran'] === 'dokter'): ?>
+
+        <?php
+        if ($u['peran'] === 'admin'): ?>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/hewan.php">Hewan</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/monitoring.php">Monitoring Harian</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/reservasi.php">Reservasi</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/pelanggan.php">Pelanggan</a></li>
+        <?php endif; ?>
+
+        <?php
+        if ($u['peran'] === 'dokter'): ?>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/rekam_medis.php">Rekam Medis</a></li>
         <?php endif; ?>
       </ul>

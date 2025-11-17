@@ -1,6 +1,4 @@
 <?php
-// includes/functions.php
-
 function esc($s, $mysqli = null)
 {
     if ($mysqli) {

@@ -1,5 +1,4 @@
 <?php
-// modules/rekam_medis.php - single-file Rekam Medis (dokter only)
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';

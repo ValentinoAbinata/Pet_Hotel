@@ -1,5 +1,4 @@
 <?php
-// includes/footer.php
 ?>
   </main>
 

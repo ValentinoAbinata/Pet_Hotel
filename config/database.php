@@ -1,6 +1,4 @@
 <?php
-// config/database.php
-// Sesuaikan credential database Anda di sini
 $DB_HOST = '127.0.0.1';
 $DB_USER = 'root';
 $DB_PASS = '';
