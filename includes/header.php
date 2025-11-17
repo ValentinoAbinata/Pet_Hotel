@@ -49,6 +49,12 @@ $u = current_user();
                 data-bs-toggle="dropdown"><?= htmlspecialchars($u['nama_lengkap']) ?></a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="/Pet_Hotel/pages/dashboard.php">Dashboard</a></li>
+                <li><a class="dropdown-item" href="/Pet_Hotel/portal/hewan.php">Hewan Saya</a></li>
+                <li><a class="dropdown-item" href="/Pet_Hotel/portal/reservasi.php">Reservasi Saya</a></li>
+                <li><a class="dropdown-item" href="/Pet_Hotel/portal/profil.php">Profil Saya</a></li>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
                 <li><a class="dropdown-item" href="/Pet_Hotel/pages/logout.php">Logout</a></li>
               </ul>
             </li>
