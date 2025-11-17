@@ -86,7 +86,13 @@ foreach ($errors as $e)
   echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
 
 if ($action === 'list'):
-  $q = $mysqli->query("SELECT r.*, u.nama_lengkap as customer_name, h.nama_hewan FROM reservasi r LEFT JOIN users u ON r.customer_id = u.user_id LEFT JOIN hewan h ON r.hewan_id = h.hewan_id ORDER BY r.reservasi_id DESC");
+  $q = $mysqli->query("SELECT r.*, u.nama_lengkap as customer_name, h.nama_hewan, SUM(rl.harga_saat_reservasi) as total_biaya 
+                    FROM reservasi r 
+                    LEFT JOIN users u ON r.customer_id = u.user_id 
+                    LEFT JOIN hewan h ON r.hewan_id = h.hewan_id 
+                    LEFT JOIN reservasi_layanan rl ON r.reservasi_id = rl.reservasi_id 
+                    GROUP BY r.reservasi_id 
+                    ORDER BY r.reservasi_id DESC");
   ?>
   <div class="d-flex justify-content-between mb-3">
     <h3>Reservasi</h3>
@@ -101,6 +107,7 @@ if ($action === 'list'):
         <th>Check-in</th>
         <th>Check-out</th>
         <th>Status</th>
+        <th>Total Biaya</th>
         <th>Aksi</th>
       </tr>
     </thead>
@@ -113,6 +120,7 @@ if ($action === 'list'):
           <td><?= date('d/m/Y H:i', strtotime($r['tanggal_checkin'])) ?></td>
           <td><?= date('d/m/Y H:i', strtotime($r['tanggal_checkout'])) ?></td>
           <td><?= htmlspecialchars($r['status_reservasi']) ?></td>
+          <td>Rp<?= number_format((int) $r['total_biaya']) ?></td>
           <td>
             <a class="btn btn-sm btn-primary" href="reservasi.php?action=edit&id=<?= $r['reservasi_id'] ?>">Edit</a>
             <a class="btn btn-sm btn-danger" href="reservasi.php?action=delete&id=<?= $r['reservasi_id'] ?>"
@@ -128,14 +136,12 @@ elseif ($action === 'create'):
   <h3>Buat Reservasi</h3>
   <form method="post">
     <input type="hidden" name="__action" value="create">
-    <div class="mb-3"><label class="form-label">Customer</label><select name="customer_id" class="form-select"
-        required><?php $customerRes->data_seek(0);
-        while ($c = $customerRes->fetch_assoc()): ?>
+    <div class="mb-3"><label class="form-label">Customer</label><select name="customer_id" class="form-select" required><?php $customerRes->data_seek(0);
+    while ($c = $customerRes->fetch_assoc()): ?>
           <option value="<?= $c['user_id'] ?>"><?= htmlspecialchars($c['nama_lengkap']) ?></option><?php endwhile; ?>
       </select></div>
-    <div class="mb-3"><label class="form-label">Hewan</label><select name="hewan_id" class="form-select"
-        required><?php $hewanRes->data_seek(0);
-        while ($h = $hewanRes->fetch_assoc()): ?>
+    <div class="mb-3"><label class="form-label">Hewan</label><select name="hewan_id" class="form-select" required><?php $hewanRes->data_seek(0);
+    while ($h = $hewanRes->fetch_assoc()): ?>
           <option value="<?= $h['hewan_id'] ?>"><?= htmlspecialchars($h['nama_hewan'] . ' — ' . $h['pemilik']) ?></option>
         <?php endwhile; ?>
       </select></div>
@@ -180,17 +186,17 @@ elseif ($action === 'edit' && $id):
   <form method="post">
     <input type="hidden" name="__action" value="update">
     <input type="hidden" name="reservasi_id" value="<?= (int) $data['reservasi_id'] ?>">
-    <div class="mb-3"><label class="form-label">Customer</label><select name="customer_id" class="form-select"
-        required><?php $customerRes->data_seek(0);
-        while ($c = $customerRes->fetch_assoc()): ?>
+    <div class="mb-3"><label class="form-label">Customer</label><select name="customer_id" class="form-select" required><?php $customerRes->data_seek(0);
+    while ($c = $customerRes->fetch_assoc()): ?>
           <option value="<?= $c['user_id'] ?>" <?= $c['user_id'] == $data['customer_id'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($c['nama_lengkap']) ?></option><?php endwhile; ?>
+            <?= htmlspecialchars($c['nama_lengkap']) ?>
+          </option><?php endwhile; ?>
       </select></div>
-    <div class="mb-3"><label class="form-label">Hewan</label><select name="hewan_id" class="form-select"
-        required><?php $hewanRes->data_seek(0);
-        while ($h = $hewanRes->fetch_assoc()): ?>
+    <div class="mb-3"><label class="form-label">Hewan</label><select name="hewan_id" class="form-select" required><?php $hewanRes->data_seek(0);
+    while ($h = $hewanRes->fetch_assoc()): ?>
           <option value="<?= $h['hewan_id'] ?>" <?= $h['hewan_id'] == $data['hewan_id'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($h['nama_hewan'] . ' — ' . $h['pemilik']) ?></option><?php endwhile; ?>
+            <?= htmlspecialchars($h['nama_hewan'] . ' — ' . $h['pemilik']) ?>
+          </option><?php endwhile; ?>
       </select></div>
     <div class="mb-3 row">
       <div class="col"><label class="form-label">Tanggal Check-in</label><input type="datetime-local"
@@ -200,9 +206,8 @@ elseif ($action === 'edit' && $id):
           name="tanggal_checkout" class="form-control"
           value="<?= date('Y-m-d\TH:i', strtotime($data['tanggal_checkout'])) ?>" required></div>
     </div>
-    <div class="mb-3"><label
-        class="form-label">Layanan</label><?php $layananRes->data_seek(0);
-        while ($l = $layananRes->fetch_assoc()): ?>
+    <div class="mb-3"><label class="form-label">Layanan</label><?php $layananRes->data_seek(0);
+    while ($l = $layananRes->fetch_assoc()): ?>
         <div class="form-check"><input class="form-check-input" type="checkbox" name="layanan[]"
             value="<?= $l['layanan_id'] ?>" <?= in_array($l['layanan_id'], $selected) ? 'checked' : '' ?>><label
             class="form-check-label"><?= htmlspecialchars($l['nama_layanan'] . ' — Rp' . number_format($l['harga'])) ?></label>

@@ -80,6 +80,8 @@ $u = current_user();
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/monitoring.php">Monitoring Harian</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/reservasi.php">Reservasi</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/pelanggan.php">Pelanggan</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/layanan.php">Layanan</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/pembayaran.php">Pembayaran</a></li>
         <?php endif; ?>
 
         <?php
