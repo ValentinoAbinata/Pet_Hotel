@@ -22,7 +22,7 @@
                             if (loginUser($_POST['email'], $_POST['password'])) {
                                 redirect('dashboard.php');
                             } else {
-                                echo '<div class="alert alert-danger">Email atau password salah!</div>';
+                                echo '<div class="alert alert-danger">Login gagal!</div>';
                             }
                         }
                         ?>

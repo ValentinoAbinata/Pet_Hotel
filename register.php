@@ -1,7 +1,4 @@
-<?php 
-// Gunakan relative path yang benar
-include_once 'includes/functions.php';
-?>
+<?php include_once 'includes/functions.php'; ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>

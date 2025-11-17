@@ -18,8 +18,4 @@ function sanitize($data) {
 function hasRole($role) {
     return isset($_SESSION['peran']) && $_SESSION['peran'] === $role;
 }
-
-// Tambahkan error reporting untuk debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 ?>

@@ -11,14 +11,6 @@ function registerUser($data) {
     $alamat = sanitize($data['alamat']);
     $peran = sanitize($data['peran']);
     
-    // Cek apakah email sudah ada
-    $check_query = "SELECT * FROM users WHERE email = '$email'";
-    $check_result = mysqli_query($conn, $check_query);
-    
-    if (mysqli_num_rows($check_result) > 0) {
-        return false; // Email sudah terdaftar
-    }
-    
     $query = "INSERT INTO users (nama_lengkap, email, password_hash, no_telepon, alamat, peran) 
               VALUES ('$nama_lengkap', '$email', '$password', '$no_telepon', '$alamat', '$peran')";
     
