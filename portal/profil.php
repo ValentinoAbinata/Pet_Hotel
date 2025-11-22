@@ -61,39 +61,45 @@ if ($msg)
 foreach ($errors as $e)
     echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
 ?>
+<link rel="stylesheet" href="/PET_HOTEL/style/profil.css">
 
-<h3>Profil Saya</h3>
-<p>Kelola informasi kontak dan data diri Anda.</p>
+<div class="profil-container">
+    <!-- Ganti struktur HTML yang ada -->
+    <div class="profil-header">
+        <h3>Profil Saya</h3>
+        <p>Kelola informasi kontak dan data diri Anda.</p>
+    </div>
+    
+    <div class="profil-card">
+        <div class="profil-card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">Nama Lengkap</label>
+                    <input name="nama_lengkap" class="form-control" value="<?= htmlspecialchars($data['nama_lengkap']) ?>"
+                        required>
+                </div>
 
-<div class="card">
-    <div class="card-body">
-        <form method="post">
-            <div class="mb-3">
-                <label class="form-label">Nama Lengkap</label>
-                <input name="nama_lengkap" class="form-control" value="<?= htmlspecialchars($data['nama_lengkap']) ?>"
-                    required>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">Email (Tidak bisa diubah)</label>
+                    <input name="email" type="email" class="form-control" value="<?= htmlspecialchars($data['email']) ?>"
+                        disabled readonly>
+                    <small>Email digunakan untuk login dan tidak dapat diubah.</small>
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">Email (Tidak bisa diubah)</label>
-                <input name="email" type="email" class="form-control" value="<?= htmlspecialchars($data['email']) ?>"
-                    disabled readonly>
-                <small>Email digunakan untuk login dan tidak dapat diubah.</small>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">No. Telepon</label>
+                    <input name="no_telepon" class="form-control" value="<?= htmlspecialchars($data['no_telepon']) ?>">
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">No. Telepon</label>
-                <input name="no_telepon" class="form-control" value="<?= htmlspecialchars($data['no_telepon']) ?>">
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">Alamat</label>
+                    <textarea name="alamat" class="form-control"
+                        rows="3"><?= htmlspecialchars($data['alamat']) ?></textarea>
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">Alamat</label>
-                <textarea name="alamat" class="form-control"
-                    rows="3"><?= htmlspecialchars($data['alamat']) ?></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-        </form>
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            </form>
+        </div>
     </div>
 </div>
 

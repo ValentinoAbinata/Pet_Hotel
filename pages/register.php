@@ -30,33 +30,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 include __DIR__ . '/../includes/header.php';
 ?>
-<div class="card mx-auto" style="max-width:480px">
-  <div class="card-body">
-    <h5 class="card-title">Register</h5>
-    <form method="post">
-      <div class="mb-3">
-        <label class="form-label">Nama lengkap</label>
-        <input class="form-control" name="nama_lengkap" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-control" name="email" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" class="form-control" name="password" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Peran</label>
-        <select class="form-select" name="peran">
-          <option value="customer">Customer</option>
-          <option value="admin">Admin</option>
-          <option value="dokter">Dokter</option>
-        </select>
-      </div>
-      <button class="btn btn-primary">Register</button>
-      <a class="btn btn-link" href="login.php">Login</a>
-    </form>
-  </div>
+<link rel="stylesheet" href="/PET_HOTEL/style/register.css">
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-card-header">
+            <h1 class="register-card-title">Daftar Akun Baru</h1>
+        </div>
+        <div class="register-card-body">
+            <form method="post">
+                <div class="form-group mb-3">
+                    <label class="form-label">Nama lengkap</label>
+                    <input class="form-control" name="nama_lengkap" required placeholder="Masukkan nama lengkap Anda">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" required placeholder="contoh@email.com">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" name="password" required placeholder="Buat password yang kuat">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Peran</label>
+                    <select class="form-select" name="peran">
+                        <option value="customer">Customer</option>
+                        <option value="admin">Admin</option>
+                        <option value="dokter">Dokter</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+                    <a class="btn btn-link" href="login.php">Sudah punya akun? Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

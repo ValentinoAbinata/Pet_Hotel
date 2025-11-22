@@ -1,0 +1,229 @@
+:root {
+    --primary-green: #22c55e;
+    --primary-dark-green: #16a34a;
+    --primary-light-green: #4ade80;
+    --secondary-white: #ffffff;
+    --accent-green: #dcfce7;
+    --text-dark: #1f2937;
+    --text-dark-strong: #111827;
+    --text-light: #6b7280;
+    --border-light: #e5e7eb;
+    --shadow-light: 0 2px 10px rgba(34, 197, 94, 0.1);
+    --shadow-medium: 0 4px 20px rgba(34, 197, 94, 0.15);
+}
+
+.layanan-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.layanan-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--accent-green), var(--secondary-white));
+    border-radius: 16px;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
+}
+
+.layanan-header h3 {
+    color: var(--text-dark-strong);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.layanan-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.layanan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.layanan-card {
+    background: var(--secondary-white);
+    border-radius: 16px;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.layanan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+    border-color: var(--primary-light-green);
+}
+
+.layanan-card-body {
+    padding: 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.layanan-title {
+    color: var(--text-dark-strong);
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.layanan-price {
+    color: var(--primary-dark-green);
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.layanan-description {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.layanan-meta {
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.layanan-footer {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 2rem;
+    background: linear-gradient(135deg, var(--accent-green), var(--secondary-white));
+    border-radius: 16px;
+    border: 1px solid var(--border-light);
+}
+
+.layanan-footer p {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.layanan-footer a {
+    color: var(--primary-green);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.layanan-footer a:hover {
+    color: var(--primary-dark-green);
+    text-decoration: underline;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .layanan-container {
+        padding: 1rem;
+    }
+
+    .layanan-header {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .layanan-header h3 {
+        font-size: 1.75rem;
+    }
+
+    .layanan-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .layanan-card-body {
+        padding: 1.5rem;
+    }
+
+    .layanan-footer {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .layanan-container {
+        padding: 0.5rem;
+    }
+
+    .layanan-header {
+        padding: 1.25rem;
+    }
+
+    .layanan-header h3 {
+        font-size: 1.5rem;
+    }
+
+    .layanan-card-body {
+        padding: 1.25rem;
+    }
+
+    .layanan-title {
+        font-size: 1.125rem;
+    }
+
+    .layanan-price {
+        font-size: 1.25rem;
+    }
+}
+
+.layanan-card:hover .layanan-title {
+    color: var(--primary-dark-green);
+}
+
+.layanan-card:hover .layanan-price {
+    color: var(--primary-green);
+}
+
+.layanan-price {
+    position: relative;
+    display: inline-block;
+}
+
+.layanan-price::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-green), transparent);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.layanan-card:hover .layanan-price::after {
+    transform: scaleX(1);
+}

@@ -8,44 +8,15 @@ $u = current_user();
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Pet Hotel</title>
+  <title>GreenPaws</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      padding-top: 56px;
-    }
-
-    .sidebar {
-      min-width: 200px;
-      max-width: 220px;
-      height: 100vh;
-      position: fixed;
-      top: 56px;
-      left: 0;
-      padding: 1rem;
-      background: #f8f9fa;
-    }
-
-    .content {
-      margin-left: 240px;
-      padding: 1.25rem;
-    }
-
-    .navbar-nav .nav-link {
-      color: rgba(255, 255, 255, .85);
-    }
-
-    .navbar-nav .nav-link.active,
-    .navbar-nav .nav-link:hover {
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="/Pet_Hotel/style/header.css">
 </head>
 
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
     <div class="container-fluid">
-      <a class="navbar-brand" href="<?= $u ? '/Pet_Hotel/pages/dashboard.php' : '/Pet_Hotel/index.php' ?>">Pet Hotel</a>
+      <a class="navbar-brand" href="<?= $u ? '/Pet_Hotel/pages/dashboard.php' : '/Pet_Hotel/index.php' ?>">GreenPaws</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navcollapse">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -74,7 +45,7 @@ $u = current_user();
               <a class="nav-link" href="/Pet_Hotel/portal/hewan.php">Hewan Saya</a>
             </li>
             <li class="nav-item">
-              <a class_="nav-link" href="/Pet_Hotel/portal/reservasi.php">Reservasi Saya</a>
+              <a class="nav-link" href="/Pet_Hotel/portal/reservasi.php">Reservasi Saya</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/Pet_Hotel/portal/profil.php">Profil Saya</a>

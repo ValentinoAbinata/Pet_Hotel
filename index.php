@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
 include __DIR__ . '/includes/header.php';
 ?>
-
+<link rel="stylesheet" href="/PET_HOTEL/style/index.css">
 <div class="container text-center mt-5 p-5 bg-light rounded shadow-sm">
     <h1 class="display-4">Selamat Datang di Pet Hotel</h1>
     <p class="lead">Layanan penitipan dan perawatan hewan peliharaan profesional.</p>

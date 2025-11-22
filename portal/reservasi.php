@@ -67,128 +67,158 @@ $hewanRes = $mysqli->query("SELECT hewan_id,nama_hewan FROM hewan WHERE customer
 $layananRes = $mysqli->query("SELECT * FROM layanan ORDER BY layanan_id");
 
 include __DIR__ . '/../includes/header.php';
-$msg = get_flash();
-if ($msg)
-    echo '<div class="alert alert-info">' . htmlspecialchars($msg) . '</div>';
-foreach ($errors as $e)
-    echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
-
-if ($action === 'list'):
-    // Query untuk mengambil riwayat reservasi PELANGGAN INI SAJA
-    $q = $mysqli->query("SELECT r.*, h.nama_hewan, SUM(rl.harga_saat_reservasi) as total_biaya 
-                        FROM reservasi r 
-                        LEFT JOIN hewan h ON r.hewan_id = h.hewan_id 
-                        LEFT JOIN reservasi_layanan rl ON r.reservasi_id = rl.reservasi_id 
-                        WHERE r.customer_id = $customer_id 
-                        GROUP BY r.reservasi_id 
-                        ORDER BY r.reservasi_id DESC");
-    ?>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Reservasi Saya</h3>
-        <a class="btn btn-success" href="reservasi.php?action=create">Buat Reservasi Baru</a>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Hewan</th>
-                    <th>Check-in</th>
-                    <th>Check-out</th>
-                    <th>Status</th>
-                    <th>Total Biaya</th>
-                    <th>Laporan</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($r = $q->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= $r['reservasi_id'] ?></td>
-                        <td><?= htmlspecialchars($r['nama_hewan']) ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($r['tanggal_checkin'])) ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($r['tanggal_checkout'])) ?></td>
-                        <td>
-                            <?php
-                            $status = htmlspecialchars($r['status_reservasi']);
-                            $badge = 'bg-secondary';
-                            if ($status == 'Confirmed')
-                                $badge = 'bg-success';
-                            if ($status == 'Completed')
-                                $badge = 'bg-primary';
-                            if ($status == 'Cancelled')
-                                $badge = 'bg-danger';
-                            if ($status == 'Pending')
-                                $badge = 'bg-warning';
-                            echo "<span class=\"badge $badge\">$status</span>";
-                            ?>
-                        </td>
-                        <td>Rp<?= number_format((int) $r['total_biaya']) ?></td>
-
-                        <td>
-                            <a href="monitoring.php?reservasi_id=<?= $r['reservasi_id'] ?>" class="btn btn-sm btn-info">
-                                Lihat Laporan
-                            </a>
-                        </td>
-
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-    </div>
-    <?php
-elseif ($action === 'create'):
-    ?>
-    <h3>Buat Reservasi Baru</h3>
-    <p>Silakan isi detail di bawah ini untuk memesan tempat.</p>
-    <form method="post" class="card card-body">
-        <input type="hidden" name="__action" value="create">
-
-        <div class="mb-3">
-            <label class="form-label">Hewan Peliharaan</label>
-            <select name="hewan_id" class="form-select" required>
-                <option value="">— Pilih hewan Anda —</option>
-                <?php $hewanRes->data_seek(0);
-                while ($h = $hewanRes->fetch_assoc()): ?>
-                    <option value="<?= $h['hewan_id'] ?>"><?= htmlspecialchars($h['nama_hewan']) ?></option>
-                <?php endwhile; ?>
-            </select>
-            <small>Hewan tidak ada? <a href="hewan.php?action=create">Tambah data hewan dulu</a>.</small>
-        </div>
-
-        <div class="mb-3 row">
-            <div class="col-md-6">
-                <label class="form-label">Tanggal Check-in</label>
-                <input type="datetime-local" name="tanggal_checkin" class="form-control" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Tanggal Check-out</label>
-                <input type="datetime-local" name="tanggal_checkout" class="form-control" required>
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Layanan Tambahan (Opsional)</label>
-            <?php $layananRes->data_seek(0);
-            while ($l = $layananRes->fetch_assoc()): ?>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="layanan[]" value="<?= $l['layanan_id'] ?>">
-                    <label class="form-check-label">
-                        <?= htmlspecialchars($l['nama_layanan']) ?> — Rp<?= number_format($l['harga']) ?>
-                    </label>
-                </div>
-            <?php endwhile; ?>
-        </div>
-
-        <hr>
-        <div class="d-flex justify-content-between">
-            <a class="btn btn-link" href="reservasi.php?action=list">Batal</a>
-            <button class="btn btn-primary">Kirim Permintaan Reservasi</button>
-        </div>
-    </form>
-    <?php
-else:
-    echo '<div class="alert alert-warning">Aksi tidak dikenal.</div>';
-endif;
-
-include __DIR__ . '/../includes/footer.php';
 ?>
+<link rel="stylesheet" href="/PET_HOTEL/style/reservasi.css">
+
+<div class="reservasi-container">
+    <?php
+    $msg = get_flash();
+    if ($msg)
+        echo '<div class="alert alert-info">' . htmlspecialchars($msg) . '</div>';
+    foreach ($errors as $e)
+        echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
+
+    if ($action === 'list'):
+        // Query untuk mengambil riwayat reservasi PELANGGAN INI SAJA
+        $q = $mysqli->query("SELECT r.*, h.nama_hewan, SUM(rl.harga_saat_reservasi) as total_biaya 
+                            FROM reservasi r 
+                            LEFT JOIN hewan h ON r.hewan_id = h.hewan_id 
+                            LEFT JOIN reservasi_layanan rl ON r.reservasi_id = rl.reservasi_id 
+                            WHERE r.customer_id = $customer_id 
+                            GROUP BY r.reservasi_id 
+                            ORDER BY r.reservasi_id DESC");
+        ?>
+        <div class="action-header">
+            <h3>Reservasi Saya</h3>
+            <a class="btn btn-success" href="reservasi.php?action=create">Buat Reservasi Baru</a>
+        </div>
+        
+        <?php if ($q->num_rows > 0): ?>
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Hewan</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Status</th>
+                                <th>Total Biaya</th>
+                                <th>Laporan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($r = $q->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= $r['reservasi_id'] ?></td>
+                                    <td><?= htmlspecialchars($r['nama_hewan']) ?></td>
+                                    <td><?= date('d/m/Y H:i', strtotime($r['tanggal_checkin'])) ?></td>
+                                    <td><?= date('d/m/Y H:i', strtotime($r['tanggal_checkout'])) ?></td>
+                                    <td>
+                                        <?php
+                                        $status = htmlspecialchars($r['status_reservasi']);
+                                        $badge = 'bg-secondary';
+                                        if ($status == 'Confirmed') $badge = 'bg-success';
+                                        if ($status == 'Completed') $badge = 'bg-primary';
+                                        if ($status == 'Cancelled') $badge = 'bg-danger';
+                                        if ($status == 'Pending') $badge = 'bg-warning';
+                                        echo "<span class=\"badge $badge\">$status</span>";
+                                        ?>
+                                    </td>
+                                    <td class="price">Rp<?= number_format((int) $r['total_biaya']) ?></td>
+                                    <td>
+                                        <a href="monitoring.php?reservasi_id=<?= $r['reservasi_id'] ?>" class="btn btn-sm btn-info">
+                                            Lihat Laporan
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="empty-state">
+                <div class="icon">📅</div>
+                <h5>Belum ada reservasi</h5>
+                <p class="text-muted">Mulai buat reservasi pertama Anda</p>
+                <a href="reservasi.php?action=create" class="btn btn-success">Buat Reservasi Pertama</a>
+            </div>
+        <?php endif; ?>
+        
+    <?php elseif ($action === 'create'): ?>
+        <div class="form-container">
+            <h3>Buat Reservasi Baru</h3>
+            <p>Silakan isi detail di bawah ini untuk memesan tempat.</p>
+            
+            <form method="post">
+                <input type="hidden" name="__action" value="create">
+
+                <div class="mb-4">
+                    <label class="form-label">Hewan Peliharaan</label>
+                    <select name="hewan_id" class="form-select" required>
+                        <option value="">— Pilih hewan Anda —</option>
+                        <?php $hewanRes->data_seek(0);
+                        while ($h = $hewanRes->fetch_assoc()): ?>
+                            <option value="<?= $h['hewan_id'] ?>"><?= htmlspecialchars($h['nama_hewan']) ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                    <a href="hewan.php?action=create" class="add-pet-link">
+                        <span>➕</span>
+                        Tambah data hewan dulu
+                    </a>
+                </div>
+
+                <div class="mb-4 row">
+                    <div class="col-md-6">
+                        <label class="form-label">Tanggal Check-in</label>
+                        <input type="datetime-local" name="tanggal_checkin" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tanggal Check-out</label>
+                        <input type="datetime-local" name="tanggal_checkout" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Layanan Tambahan (Opsional)</label>
+                    <div class="layanan-card">
+                        <div class="layanan-card-header">
+                            <strong>Pilih Layanan yang Diinginkan</strong>
+                        </div>
+                        <div class="layanan-card-body">
+                            <div class="layanan-grid">
+                                <?php $layananRes->data_seek(0);
+                                while ($l = $layananRes->fetch_assoc()): ?>
+                                    <div class="form-check-enhanced">
+                                        <label class="form-check-label-enhanced">
+                                            <div class="layanan-details">
+                                                <span class="layanan-nama"><?= htmlspecialchars($l['nama_layanan']) ?></span>
+                                                <span class="layanan-price">Rp<?= number_format($l['harga'], 0, ',', '.') ?></span>
+                                            </div>
+                                            <input class="form-check-input" type="checkbox" name="layanan[]" value="<?= $l['layanan_id'] ?>" id="layanan_<?= $l['layanan_id'] ?>">
+                                        </label>
+                                    </div>
+                                <?php endwhile; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a class="btn btn-secondary" href="reservasi.php?action=list">
+                        ✕ Batal
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        📧 Kirim Permintaan Reservasi
+                    </button>
+                </div>
+            </form>
+        </div>
+    <?php else: ?>
+        <div class="alert alert-warning">Aksi tidak dikenal.</div>
+    <?php endif; ?>
+</div>
+
+<?php include __DIR__ . '/../includes/footer.php'; ?>

@@ -63,103 +63,153 @@ if ($action === 'delete' && $id) {
 }
 
 // Sertakan header.php
-include __DIR__ . '/../includes/header.php';
-$msg = get_flash();
-if ($msg)
-    echo '<div class="alert alert-info">' . htmlspecialchars($msg) . '</div>';
-foreach ($errors as $e)
-    echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
-
-if ($action === 'list'):
-    // Tampilkan HANYA hewan milik customer yang login
-    $q = $mysqli->query("SELECT h.* FROM hewan h WHERE h.customer_id = $customer_id ORDER BY h.hewan_id DESC");
-    ?>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Hewan Saya</h3>
-        <a class="btn btn-success" href="hewan.php?action=create">Tambah Hewan Baru</a>
-    </div>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nama</th>
-                <th>Jenis</th>
-                <th>Ras</th>
-                <th>Tgl Lahir</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($r = $q->fetch_assoc()): ?>
-                <tr>
-                    <td><?= $r['hewan_id'] ?></td>
-                    <td><?= htmlspecialchars($r['nama_hewan']) ?></td>
-                    <td><?= htmlspecialchars($r['jenis_hewan']) ?></td>
-                    <td><?= htmlspecialchars($r['ras']) ?></td>
-                    <td><?= $r['tanggal_lahir'] ? date('d/m/Y', strtotime($r['tanggal_lahir'])) : '' ?></td>
-                    <td>
-                        <a class="btn btn-sm btn-primary" href="hewan.php?action=edit&id=<?= $r['hewan_id'] ?>">Edit</a>
-                        <a class="btn btn-sm btn-danger" href="hewan.php?action=delete&id=<?= $r['hewan_id'] ?>"
-                            onclick="return confirm('Hapus hewan ini?')">Hapus</a>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        </tbody>
-    </table>
+include __DIR__ . '/../includes/header.php';?>
+<link rel="stylesheet" href="/PET_HOTEL/style/hewan.css">
+<div class="hewan-container">
     <?php
-elseif ($action === 'create'):
-    ?>
-    <h3>Tambah Data Hewan</h3>
-    <p>Daftarkan hewan peliharaan Anda di sini.</p>
-    <form method="post">
-        <input type="hidden" name="__action" value="create">
+    $msg = get_flash();
+    if ($msg)
+        echo '<div class="alert alert-info">' . htmlspecialchars($msg) . '</div>';
+    foreach ($errors as $e)
+        echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
 
-        <div class="mb-3"><label class="form-label">Nama hewan</label><input name="nama_hewan" class="form-control"
-                required></div>
-        <div class="mb-3"><label class="form-label">Jenis hewan (mis: Kucing, Anjing)</label><input name="jenis_hewan"
-                class="form-control"></div>
-        <div class="mb-3"><label class="form-label">Ras (mis: Persia, Golden Retriever)</label><input name="ras"
-                class="form-control"></div>
-        <div class="mb-3"><label class="form-label">Tanggal lahir</label><input name="tanggal_lahir" type="date"
-                class="form-control"></div>
-        <div class="mb-3"><label class="form-label">Catatan (Alergi, kondisi khusus, dll)</label><textarea
-                name="catatan_pemilik" class="form-control"></textarea></div>
-        <button class="btn btn-primary">Simpan</button>
-        <a class="btn btn-link" href="hewan.php?action=list">Batal</a>
-    </form>
-    <?php
-elseif ($action === 'edit' && $id):
-    // Pastikan mengambil HANYA data hewan milik customer yang login
-    $res = $mysqli->query("SELECT * FROM hewan WHERE hewan_id = $id AND customer_id = $customer_id LIMIT 1");
-    if (!$res || $res->num_rows == 0) {
-        flash('Hewan tidak ditemukan.');
-        header('Location: hewan.php?action=list');
-        exit;
-    }
-    $data = $res->fetch_assoc();
-    ?>
-    <h3>Edit Data Hewan</h3>
-    <form method="post">
-        <input type="hidden" name="__action" value="update">
-        <input type="hidden" name="hewan_id" value="<?= (int) $data['hewan_id'] ?>">
+    if ($action === 'list'):
+        // Tampilkan HANYA hewan milik customer yang login
+        $q = $mysqli->query("SELECT h.* FROM hewan h WHERE h.customer_id = $customer_id ORDER BY h.hewan_id DESC");
+        ?>
+        <div class="action-header">
+            <h3>🐾 Hewan Saya</h3>
+            <a class="btn btn-success" href="hewan.php?action=create">
+                ➕ Tambah Hewan Baru
+            </a>
+        </div>
+        
+        <?php if ($q->num_rows > 0): ?>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nama</th>
+                            <th>Jenis</th>
+                            <th>Ras</th>
+                            <th>Tgl Lahir</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($r = $q->fetch_assoc()): ?>
+                            <tr>
+                                <td data-label="ID"><strong>#<?= $r['hewan_id'] ?></strong></td>
+                                <td data-label="Nama"><?= htmlspecialchars($r['nama_hewan']) ?></td>
+                                <td data-label="Jenis"><?= htmlspecialchars($r['jenis_hewan']) ?></td>
+                                <td data-label="Ras"><?= htmlspecialchars($r['ras']) ?></td>
+                                <td data-label="Tgl Lahir"><?= $r['tanggal_lahir'] ? date('d/m/Y', strtotime($r['tanggal_lahir'])) : '-' ?></td>
+                                <td data-label="Aksi">
+                                    <div class="action-buttons">
+                                        <a class="btn btn-sm btn-primary" href="hewan.php?action=edit&id=<?= $r['hewan_id'] ?>">
+                                            ✏️ Edit
+                                        </a>
+                                        <a class="btn btn-sm btn-danger" href="hewan.php?action=delete&id=<?= $r['hewan_id'] ?>"
+                                            onclick="return confirm('Hapus hewan ini?')">
+                                            🗑️ Hapus
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="empty-state">
+                <div class="icon">🐕</div>
+                <h5>Belum ada hewan terdaftar</h5>
+                <p class="text-muted">Mulai daftarkan hewan peliharaan Anda</p>
+                <a href="hewan.php?action=create" class="btn btn-success">Tambah Hewan Pertama</a>
+            </div>
+        <?php endif; ?>
+        
+    <?php elseif ($action === 'create'): ?>
+        <div class="form-container">
+            <h3>Tambah Data Hewan</h3>
+            <p>Daftarkan hewan peliharaan Anda di sini.</p>
+            <form method="post" id="hewanForm">
+                <input type="hidden" name="__action" value="create">
 
-        <div class="mb-3"><label class="form-label">Nama hewan</label><input name="nama_hewan" class="form-control" required
-                value="<?= htmlspecialchars($data['nama_hewan']) ?>"></div>
-        <div class_="mb-3"><label class="form-label">Jenis hewan</label><input name="jenis_hewan" class="form-control"
-                value="<?= htmlspecialchars($data['jenis_hewan']) ?>"></div>
-        <div class="mb-3"><label class="form-label">Ras</label><input name="ras" class="form-control"
-                value="<?= htmlspecialchars($data['ras']) ?>"></div>
-        <div class="mb-3"><label class="form-label">Tanggal lahir</label><input name="tanggal_lahir" type="date"
-                class="form-control" value="<?= $data['tanggal_lahir'] ?>"></div>
-        <div class="mb-3"><label class="form-label">Catatan pemilik</label><textarea name="catatan_pemilik"
-                class="form-control"><?= htmlspecialchars($data['catatan_pemilik']) ?></textarea></div>
-        <button class="btn btn-primary">Simpan</button>
-        <a class="btn btn-link" href="hewan.php?action=list">Batal</a>
-    </form>
-    <?php
-else:
-    echo '<div class="alert alert-warning">Aksi tidak dikenal.</div>';
-endif;
+                <div class="mb-3">
+                    <label class="form-label">Nama hewan</label>
+                    <input name="nama_hewan" class="form-control" required placeholder="Masukkan nama hewan">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Jenis hewan</label>
+                    <input name="jenis_hewan" class="form-control" placeholder="Contoh: Kucing, Anjing, Kelinci">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ras</label>
+                    <input name="ras" class="form-control" placeholder="Contoh: Persia, Golden Retriever">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tanggal lahir</label>
+                    <input name="tanggal_lahir" type="date" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Catatan khusus</label>
+                    <textarea name="catatan_pemilik" class="form-control" rows="4" 
+                            placeholder="Alergi, kondisi kesehatan khusus, kebiasaan, dll."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-success">💾 Simpan Data</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='hewan.php?action=list'">✕ Batal</button>
+                </div>
+            </form>
+        </div>
 
-include __DIR__ . '/../includes/footer.php';
-?>
+    <?php elseif ($action === 'edit' && $id):
+        // Pastikan mengambil HANYA data hewan milik customer yang login
+        $res = $mysqli->query("SELECT * FROM hewan WHERE hewan_id = $id AND customer_id = $customer_id LIMIT 1");
+        if (!$res || $res->num_rows == 0) {
+            flash('Hewan tidak ditemukan.');
+            header('Location: hewan.php?action=list');
+            exit;
+        }
+        $data = $res->fetch_assoc();
+        ?>
+        <div class="form-container">
+            <h3>✏️ Edit Data Hewan</h3>
+            <form method="post">
+                <input type="hidden" name="__action" value="update">
+                <input type="hidden" name="hewan_id" value="<?= (int) $data['hewan_id'] ?>">
+
+                <div class="mb-3">
+                    <label class="form-label">Nama hewan</label>
+                    <input name="nama_hewan" class="form-control" required value="<?= htmlspecialchars($data['nama_hewan']) ?>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Jenis hewan</label>
+                    <input name="jenis_hewan" class="form-control" value="<?= htmlspecialchars($data['jenis_hewan']) ?>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ras</label>
+                    <input name="ras" class="form-control" value="<?= htmlspecialchars($data['ras']) ?>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tanggal lahir</label>
+                    <input name="tanggal_lahir" type="date" class="form-control" value="<?= $data['tanggal_lahir'] ?>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Catatan pemilik</label>
+                    <textarea name="catatan_pemilik" class="form-control" rows="4"><?= htmlspecialchars($data['catatan_pemilik']) ?></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-success">💾 Simpan Perubahan</button>
+                    <a class="btn btn-link" href="hewan.php?action=list">✕ Batal</a>
+                </div>
+            </form>
+        </div>
+    <?php else: ?>
+        <div class="alert alert-warning">⚠️ Aksi tidak dikenal.</div>
+    <?php endif; ?>
+</div>
+
+<?php include __DIR__ . '/../includes/footer.php'; ?>
