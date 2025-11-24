@@ -203,7 +203,7 @@ $u = current_user();
                 <p class="card-text">Selamat datang di sistem Pet Hotel. Anda dapat mengakses menu yang relevan melalui sidebar.</p>
                 <div class="mt-3">
                     <a href="/Pet_Hotel/modules/monitoring.php" class="btn btn-primary me-2">Monitoring Hewan</a>
-                    <a href="/Pet_Hotel/modules/laporan.php" class="btn btn-info">Laporan Medis</a>
+                    <a href="/Pet_Hotel/modules/rekam_medis.php" class="btn btn-info">Laporan Medis</a>
                 </div>
             </div>
         </div>

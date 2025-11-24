@@ -4,14 +4,29 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 require_login();
-require_role(['admin']);
+require_role(['admin', 'dokter']);  
 
 $action = $_GET['action'] ?? 'list';
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $errors = [];
 
+// Pengecekan akses untuk create - hanya admin
+if ($action === 'create' && current_user()['role'] !== 'admin') {
+    flash('Anda tidak memiliki akses untuk menambah monitoring.');
+    header('Location: monitoring.php?action=list');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $sub = $_POST['__action'] ?? '';
+  
+  // Pengecekan akses untuk create - hanya admin
+  if ($sub === 'create' && current_user()['role'] !== 'admin') {
+      flash('Anda tidak memiliki akses untuk menambah monitoring.');
+      header('Location: monitoring.php?action=list');
+      exit;
+  }
+  
   if ($sub === 'create') {
     $reservasi_id = (int) $_POST['reservasi_id'];
     $staf_id = (int) current_user()['user_id'];
@@ -123,7 +138,10 @@ if ($action === 'list'):
   ?>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Monitoring Harian</h3>
-    <a class="btn btn-success" href="monitoring.php?action=create">Tambah Monitoring</a>
+    <!-- Hanya tampilkan tombol untuk admin -->
+    <?php if (current_user()['role'] === 'admin'): ?>
+      <a class="btn btn-success" href="monitoring.php?action=create">Tambah Monitoring</a>
+    <?php endif; ?>
   </div>
   <table class="table table-striped">
     <thead>
@@ -159,6 +177,7 @@ if ($action === 'list'):
   </table>
   <?php
 elseif ($action === 'create'):
+  // Form create hanya bisa diakses admin (sudah dicek di atas)
   ?>
   <h3>Tambah Monitoring Harian</h3>
   <form method="post" enctype="multipart/form-data">

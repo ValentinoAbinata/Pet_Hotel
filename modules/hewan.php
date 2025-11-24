@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 require_login();
-require_role(['admin']);
+require_role(['admin', 'dokter']);
 
 $action = $_GET['action'] ?? 'list';
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
