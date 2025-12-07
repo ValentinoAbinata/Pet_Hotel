@@ -1,6 +1,20 @@
 <?php
 require_once __DIR__ . '/auth.php';
+// Pastikan functions dimuat untuk notifikasi
+require_once __DIR__ . '/../includes/functions.php'; 
+
 $u = current_user();
+
+// --- LOGIKA DATA NOTIFIKASI ---
+$unread = 0;
+$notif_list = null;
+
+if ($u) {
+    if (function_exists('count_unread_notif')) {
+        $unread = count_unread_notif($u['user_id']);
+        $notif_list = get_my_notif($u['user_id']);
+    }
+}
 ?>
 <!doctype html>
 <html lang="id">
@@ -11,6 +25,23 @@ $u = current_user();
   <title>GreenPaws</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/Pet_Hotel/style/header.css">
+  <style>
+      /* --- PERBAIKAN FOOTER --- */
+      body {
+        min-height: 100vh;      /* Tinggi minimal 100% layar */
+        display: flex;          /* Mode Flexbox */
+        flex-direction: column; /* Susunan vertikal (atas ke bawah) */
+      }
+      main {
+        flex: 1;                /* Konten utama akan "memelar" mengisi ruang kosong */
+      }
+      /* ------------------------ */
+
+      /* Styling Notifikasi */
+      .dropdown-menu-notif { width: 320px; max-height: 400px; overflow-y: auto; }
+      .dropdown-item { white-space: normal; }
+      .notif-unread { background-color: #f0f8ff; font-weight: bold; }
+  </style>
 </head>
 
 <body>
@@ -22,71 +53,37 @@ $u = current_user();
       </button>
 
       <div class="collapse navbar-collapse" id="navcollapse">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-center">
 
-          <?php if (!$u): // === JIKA TIDAK LOGIN (PENGUNJUNG PUBLIK) === ?>
+          <?php if (!$u): // === BELUM LOGIN === ?>
 
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/pages/layanan_publik.php">Lihat Layanan</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/pages/login.php">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/pages/register.php">Register</a>
-            </li>
+            <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/pages/layanan_publik.php">Lihat Layanan</a></li>
+            <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/pages/login.php">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/pages/register.php">Register</a></li>
 
-          <?php elseif ($u['peran'] === 'customer'): // === JIKA LOGIN SEBAGAI CUSTOMER === ?>
+          <?php else: // === SUDAH LOGIN === ?>
 
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/pages/dashboard.php">Dashboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/portal/hewan.php">Hewan Saya</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/portal/reservasi.php">Reservasi Saya</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/portal/profil.php">Profil Saya</a>
-            </li>
-            <li class_="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/pages/logout.php">Logout
-                (<?= htmlspecialchars(explode(' ', $u['nama_lengkap'])[0]) ?>)</a>
-            </li>
-
-          <?php else: // === JIKA LOGIN SEBAGAI ADMIN / DOKTER === ?>
-            <?php if ($u['peran'] === 'admin'): ?>
-                <li class="nav-item">
-                    <a class="nav-link" href="/Pet_Hotel/modules/staff.php">👨‍💼 Kelola Staf</a>
-                </li>
-            <?php endif; ?>
-            <?php if ($u): // === TAMPILKAN LONCENG JIKA LOGIN === ?>
-            <?php 
-              $unread = count_unread_notif($u['user_id']); 
-              $notif_list = get_my_notif($u['user_id']);
-            ?>
             <li class="nav-item dropdown me-3">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown">
                 🔔 
                 <?php if($unread > 0): ?>
-                  <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem; position: relative; top: -10px; left: -5px;">
+                  <span class="badge rounded-pill bg-danger position-absolute" style="font-size: 0.6rem; top: 8px; right: 5px;">
                     <?= $unread ?>
                   </span>
                 <?php endif; ?>
               </a>
-              <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 320px; max-height: 400px; overflow-y: auto;">
+              <ul class="dropdown-menu dropdown-menu-end shadow dropdown-menu-notif">
                 <li><h6 class="dropdown-header">Notifikasi Anda</h6></li>
                 <?php if ($notif_list && $notif_list->num_rows > 0): ?>
                     <?php while($n = $notif_list->fetch_assoc()): ?>
-                      <?php $bg = $n['status_baca'] == 0 ? 'bg-light' : ''; ?>
+                      <?php $bg = $n['status_baca'] == 0 ? 'notif-unread' : ''; ?>
                       <li class="<?= $bg ?>">
-                        <a class="dropdown-item" href="<?= htmlspecialchars($n['link_url']) ?>" style="white-space: normal;">
+                        <a class="dropdown-item" href="<?= htmlspecialchars($n['link_url']) ?>">
                           <div class="d-flex justify-content-between">
-                            <strong><?= htmlspecialchars($n['judul']) ?></strong>
+                            <strong><?= htmlspecialchars($n['judul'] ?? 'Info') ?></strong>
                             <small class="text-muted" style="font-size:0.7rem"><?= date('d/m H:i', strtotime($n['created_at'])) ?></small>
                           </div>
-                          <small class="text-muted"><?= htmlspecialchars($n['pesan']) ?></small>
+                          <small class="text-secondary"><?= htmlspecialchars($n['pesan']) ?></small>
                         </a>
                       </li>
                       <li><hr class="dropdown-divider m-0"></li>
@@ -97,10 +94,21 @@ $u = current_user();
               </ul>
             </li>
 
-          <?php endif; ?>
+            <?php if ($u['peran'] === 'customer'): ?>
+                <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/pages/dashboard.php">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/portal/hewan.php">Hewan Saya</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/portal/reservasi.php">Reservasi Saya</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/portal/profil.php">Profil Saya</a></li>
+            
+            <?php elseif ($u['peran'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Pet_Hotel/modules/staff.php">👨‍💼 Kelola Staf</a>
+                </li>
+            <?php endif; ?>
+
             <li class="nav-item">
-              <a class="nav-link" href="/Pet_Hotel/pages/logout.php">Logout
-                (<?= htmlspecialchars($u['nama_lengkap']) ?>)</a>
+              <a class="nav-link text-warning" href="/Pet_Hotel/pages/logout.php">Logout 
+                (<?= htmlspecialchars(explode(' ', $u['nama_lengkap'])[0]) ?>)</a>
             </li>
 
           <?php endif; ?>
@@ -110,38 +118,41 @@ $u = current_user();
     </div>
   </nav>
 
-  <?php // Logika untuk Sidebar Admin/Dokter
+  <?php // SIDEBAR ADMIN/DOKTER
   if ($u && ($u['peran'] === 'admin' || $u['peran'] === 'dokter')): ?>
     <aside class="sidebar">
-      <h6>Menu</h6>
+      <div class="p-3"><h6>Menu Utama</h6></div>
       <ul class="nav flex-column">
         <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/pages/dashboard.php">Dashboard</a></li>
+        
         <?php if ($u['peran'] === 'admin'): ?>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/hewan.php">Hewan</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/staf.php">Kelola Staf</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/monitoring.php">Monitoring Harian</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/reservasi.php">Reservasi</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/pelanggan.php">Pelanggan</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/layanan.php">Layanan</a></li>
-          <li class="nav-item"><a class_="nav-link" href="/Pet_Hotel/modules/pembayaran.php">Pembayaran</a></li>
-          <li class="nav-item"><a class_="nav-link" href="/Pet_Hotel/modules/catat_pembayaran.php">Catat Pembayaran</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/pembayaran.php">Pembayaran</a></li>
         <?php endif; ?>
+
         <?php if ($u['peran'] === 'dokter'): ?>
+          <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/monitoring.php">Monitoring Harian</a></li>
           <li class="nav-item"><a class="nav-link" href="/Pet_Hotel/modules/rekam_medis.php">Rekam Medis</a></li>
         <?php endif; ?>
       </ul>
     </aside>
     <main class="content">
-    <?php else: // Pengunjung publik ATAU customer (tanpa sidebar) ?>
-      <main class="container mt-4">
-      <?php endif; ?>
+    
+  <?php else: // CUSTOMER ?>
+    <main class="container mt-5 pt-4">
+  <?php endif; ?>
 
-      <?php
-      // Tampilkan flash message
-      $msg = get_flash();
-      if ($msg):
-        ?>
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-          <?= htmlspecialchars($msg) ?>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      <?php endif; ?>
+  <?php
+  $msg = get_flash();
+  if ($msg):
+  ?>
+    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+      <?= htmlspecialchars($msg) ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
