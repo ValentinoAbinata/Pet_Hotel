@@ -30,13 +30,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               status_pembayaran = '$status',
               tanggal_transaksi = NOW()";
 
-    if ($mysqli->query($sql)) {
-        flash('Status pembayaran berhasil disimpan.');
-        header('Location: reservasi.php');
-        exit;
-    } else {
-        $errors[] = 'Gagal menyimpan pembayaran: ' . $mysqli->error;
-    }
+if ($mysqli->query($sql)) {
+  // --- MULAI NOTIFIKASI ---
+  // 1. Cari tahu siapa pemilik reservasi ini
+  $qCust = $mysqli->query("SELECT customer_id FROM reservasi WHERE reservasi_id = $rid");
+  if($qCust && $qCust->num_rows > 0) {
+      $custData = $qCust->fetch_assoc();
+      $target_user = $custData['customer_id'];
+      
+      // 2. Siapkan data notifikasi
+      $judul = "Pembayaran " . $status; // Misal: Pembayaran Paid
+      $pesan = "Pembayaran untuk reservasi #$rid telah diperbarui menjadi $status.";
+      $url   = "/Pet_Hotel/portal/reservasi.php";
+
+      // 3. Kirim
+      send_notification($target_user, $judul, $pesan, $url);
+  }
+  // --- SELESAI NOTIFIKASI ---
+
+  flash('Status pembayaran berhasil disimpan.');
+  header('Location: reservasi.php');
+  exit;
+}
 }
 
 // Ambil data reservasi untuk info

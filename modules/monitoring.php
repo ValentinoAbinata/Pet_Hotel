@@ -1,4 +1,13 @@
 <?php
+
+// Source - https://stackoverflow.com/a
+// Posted by Fancy John, modified by community. See post 'Timeline' for change history
+// Retrieved 2025-12-06, License - CC BY-SA 4.0
+
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -10,8 +19,8 @@ $action = $_GET['action'] ?? 'list';
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $errors = [];
 
-// Pengecekan akses untuk create - hanya admin
-if ($action === 'create' && current_user()['role'] !== 'admin') {
+// PERBAIKAN: Izinkan Admin DAN Dokter akses create
+if ($action === 'create' && !in_array(current_user()['peran'], ['admin', 'dokter'])) {
     flash('Anda tidak memiliki akses untuk menambah monitoring.');
     header('Location: monitoring.php?action=list');
     exit;
@@ -20,8 +29,8 @@ if ($action === 'create' && current_user()['role'] !== 'admin') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $sub = $_POST['__action'] ?? '';
   
-  // Pengecekan akses untuk create - hanya admin
-  if ($sub === 'create' && current_user()['role'] !== 'admin') {
+  // PERBAIKAN: Izinkan Admin DAN Dokter akses create
+  if ($sub === 'create' && !in_array(current_user()['peran'], ['admin', 'dokter'])) {
       flash('Anda tidak memiliki akses untuk menambah monitoring.');
       header('Location: monitoring.php?action=list');
       exit;
@@ -41,10 +50,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_path = null;
     if (!empty($_FILES['media']['name'])) {
       $f = $_FILES['media'];
-      $allowed = ['image/jpeg', 'image/png', 'video/mp4'];
+      $allowed = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4'];
       if ($f['error'] === 0 && in_array($f['type'], $allowed)) {
         $ext = pathinfo($f['name'], PATHINFO_EXTENSION);
+        
+        // PERBAIKAN: Buat folder otomatis jika belum ada (Mengatasi error No such file)
+        $target_dir = __DIR__ . '/../uploads/';
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+
         $fn = 'uploads/monitoring_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
+        
+        // Simpan file
         if (!move_uploaded_file($f['tmp_name'], __DIR__ . '/../' . $fn)) {
           $errors[] = 'Gagal menyimpan file.';
         } else
@@ -52,8 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       } else
         $errors[] = 'Tipe file tidak diperbolehkan atau error upload.';
     }
-
+    
     if (empty($errors)) {
+      // 1. Siapkan Query SQL
       if ($file_path) {
         $sql = "INSERT INTO monitoring_harian (reservasi_id,staf_id,tanggal_monitoring,foto_video_url,target_makanan,aktual_makanan,aktual_mandi,catatan_kesehatan,catatan_aktivitas)
                     VALUES ($reservasi_id,$staf_id,'$tanggal','$file_path',$target_makanan,$aktual_makanan,$aktual_mandi,'$catatan_kesehatan','$catatan_aktivitas')";
@@ -61,12 +80,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "INSERT INTO monitoring_harian (reservasi_id,staf_id,tanggal_monitoring,target_makanan,aktual_makanan,aktual_mandi,catatan_kesehatan,catatan_aktivitas)
                     VALUES ($reservasi_id,$staf_id,'$tanggal',$target_makanan,$aktual_makanan,$aktual_mandi,'$catatan_kesehatan','$catatan_aktivitas')";
       }
+
+      // 2. Eksekusi Query Dulu
       if ($mysqli->query($sql)) {
+          
+        // --- LOGIKA NOTIFIKASI ---
+        // PERBAIKAN: Menggunakan r.customer_id agar tidak ambiguous dan error
+        $qRes = $mysqli->query("SELECT r.customer_id, h.nama_hewan 
+                                FROM reservasi r 
+                                JOIN hewan h ON r.hewan_id = h.hewan_id 
+                                WHERE r.reservasi_id = $reservasi_id");
+        
+        if ($qRes && $qRes->num_rows > 0) {
+            $dt = $qRes->fetch_assoc();
+            $judul = "Laporan Harian: " . $dt['nama_hewan'];
+            $pesan = "Laporan aktivitas terbaru " . $dt['nama_hewan'] . " sudah tersedia. Cek sekarang!";
+            $url   = "/Pet_Hotel/portal/monitoring.php?reservasi_id=" . $reservasi_id;
+            
+            // Panggil fungsi global
+            if (function_exists('send_notification')) {
+                send_notification($dt['customer_id'], $judul, $pesan, $url);
+            }
+        }
+        // --- SELESAI NOTIFIKASI ---
+
         flash('Monitoring disimpan.');
         header('Location: monitoring.php?action=list');
         exit;
-      } else
+
+      } else {
         $errors[] = 'Gagal menyimpan: ' . $mysqli->error;
+      }
     }
   } elseif ($sub === 'update') {
     $mid = (int) $_POST['monitoring_id'];
@@ -84,10 +128,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($_FILES['media']['name'])) {
       $f = $_FILES['media'];
-      $allowed = ['image/jpeg', 'image/png', 'video/mp4'];
+      $allowed = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4'];
       if ($f['error'] === 0 && in_array($f['type'], $allowed)) {
         $ext = pathinfo($f['name'], PATHINFO_EXTENSION);
+        
+        // PERBAIKAN: Buat folder otomatis di update juga
+        $target_dir = __DIR__ . '/../uploads/';
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+
         $fn = 'uploads/monitoring_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
+        
         if (move_uploaded_file($f['tmp_name'], __DIR__ . '/../' . $fn)) {
           if ($curf && file_exists(__DIR__ . '/../' . $curf))
             @unlink(__DIR__ . '/../' . $curf);
@@ -124,7 +176,13 @@ if ($action === 'delete' && $id) {
   exit;
 }
 
-$resvRes = $mysqli->query("SELECT r.reservasi_id, h.nama_hewan, u.nama_lengkap as customer_name FROM reservasi r LEFT JOIN hewan h ON r.hewan_id = h.hewan_id LEFT JOIN users u ON r.customer_id = u.user_id ORDER BY r.reservasi_id DESC");
+// Data untuk dropdown (Diambil yang Confirmed/Completed)
+$resvRes = $mysqli->query("SELECT r.reservasi_id, h.nama_hewan, u.nama_lengkap as customer_name 
+                          FROM reservasi r 
+                          LEFT JOIN hewan h ON r.hewan_id = h.hewan_id 
+                          LEFT JOIN users u ON r.customer_id = u.user_id 
+                          WHERE r.status_reservasi IN ('Confirmed', 'Completed')
+                          ORDER BY r.reservasi_id DESC");
 
 include __DIR__ . '/../includes/header.php';
 $msg = get_flash();
@@ -134,12 +192,15 @@ foreach ($errors as $e)
   echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
 
 if ($action === 'list'):
-  $q = $mysqli->query("SELECT m.*, u.nama_lengkap as staf_name, r.hewan_id FROM monitoring_harian m LEFT JOIN users u ON m.staf_id = u.user_id LEFT JOIN reservasi r ON m.reservasi_id = r.reservasi_id ORDER BY m.tanggal_monitoring DESC");
+  $q = $mysqli->query("SELECT m.*, u.nama_lengkap as staf_name, r.hewan_id, r.reservasi_id as rid_display 
+                      FROM monitoring_harian m 
+                      LEFT JOIN users u ON m.staf_id = u.user_id 
+                      LEFT JOIN reservasi r ON m.reservasi_id = r.reservasi_id 
+                      ORDER BY m.tanggal_monitoring DESC");
   ?>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Monitoring Harian</h3>
-    <!-- Hanya tampilkan tombol untuk admin -->
-    <?php if (current_user()['role'] === 'admin'): ?>
+    <?php if (in_array(current_user()['peran'], ['admin', 'dokter'])): ?>
       <a class="btn btn-success" href="monitoring.php?action=create">Tambah Monitoring</a>
     <?php endif; ?>
   </div>
@@ -159,10 +220,10 @@ if ($action === 'list'):
       <?php while ($r = $q->fetch_assoc()): ?>
         <tr>
           <td><?= $r['monitoring_id'] ?></td>
-          <td><?= $r['reservasi_id'] ?></td>
+          <td>#<?= $r['rid_display'] ?></td>
           <td><?= date('d/m/Y', strtotime($r['tanggal_monitoring'])) ?></td>
           <td>
-            <?= $r['foto_video_url'] ? '<a href="/pet-hotel-admin/' . htmlspecialchars($r['foto_video_url']) . '" target="_blank">Lihat</a>' : '' ?>
+            <?= $r['foto_video_url'] ? '<a href="/Pet_Hotel/' . htmlspecialchars($r['foto_video_url']) . '" target="_blank">Lihat</a>' : '' ?>
           </td>
           <td><?= (int) $r['target_makanan'] . ' / ' . (int) $r['aktual_makanan'] ?></td>
           <td><?= (int) $r['aktual_mandi'] ? 'Ya' : 'Tidak' ?></td>
@@ -177,25 +238,33 @@ if ($action === 'list'):
   </table>
   <?php
 elseif ($action === 'create'):
-  // Form create hanya bisa diakses admin (sudah dicek di atas)
   ?>
   <h3>Tambah Monitoring Harian</h3>
   <form method="post" enctype="multipart/form-data">
     <input type="hidden" name="__action" value="create">
     <div class="mb-3">
-      <label class="form-label">Reservasi</label>
+      <label class="form-label">Reservasi (Hewan Check-in)</label>
       <select name="reservasi_id" class="form-select" required>
-        <?php $resvRes->data_seek(0);
-        while ($r = $resvRes->fetch_assoc()): ?>
+        <?php 
+        if ($resvRes->num_rows > 0) {
+            $resvRes->data_seek(0);
+            while ($r = $resvRes->fetch_assoc()): 
+        ?>
           <option value="<?= $r['reservasi_id'] ?>">
-            <?= htmlspecialchars($r['reservasi_id'] . ' — ' . $r['nama_hewan'] . ' / ' . $r['customer_name']) ?></option>
-        <?php endwhile; ?>
+            <?= htmlspecialchars('#'.$r['reservasi_id'] . ' — ' . $r['nama_hewan'] . ' (' . $r['customer_name'] . ')') ?>
+          </option>
+        <?php 
+            endwhile; 
+        } else {
+            echo "<option value=''>Tidak ada hewan yang check-in (Confirmed)</option>";
+        }
+        ?>
       </select>
     </div>
     <div class="mb-3"><label class="form-label">Tanggal Monitoring</label><input type="date" name="tanggal_monitoring"
         class="form-control" value="<?= date('Y-m-d') ?>" required></div>
     <div class="mb-3"><label class="form-label">Foto/Video (jpg/png/mp4)</label><input type="file" name="media"
-        class="form-control"></div>
+        class="form-control" accept="image/*,video/*"></div>
     <div class="mb-3 row">
       <div class="col"><label class="form-label">Target makanan (0..3)</label><input type="number" name="target_makanan"
           min="0" max="3" class="form-control" value="3" required></div>
@@ -233,7 +302,8 @@ elseif ($action === 'edit' && $id):
         <?php $resvRes->data_seek(0);
         while ($r = $resvRes->fetch_assoc()): ?>
           <option value="<?= $r['reservasi_id'] ?>" <?= $r['reservasi_id'] == $data['reservasi_id'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($r['reservasi_id'] . ' — ' . $r['nama_hewan'] . ' / ' . $r['customer_name']) ?></option>
+            <?= htmlspecialchars('#'.$r['reservasi_id'] . ' — ' . $r['nama_hewan'] . ' (' . $r['customer_name'] . ')') ?>
+          </option>
         <?php endwhile; ?>
       </select>
     </div>
@@ -242,9 +312,9 @@ elseif ($action === 'edit' && $id):
     <div class="mb-3">
       <label class="form-label">Foto/Video (jpg/png/mp4)</label>
       <?php if ($data['foto_video_url']): ?>
-        <p>File saat ini: <a href="/pet-hotel-admin/<?= htmlspecialchars($data['foto_video_url']) ?>"
+        <p>File saat ini: <a href="/Pet_Hotel/<?= htmlspecialchars($data['foto_video_url']) ?>"
             target="_blank">Lihat</a></p><?php endif; ?>
-      <input type="file" name="media" class="form-control">
+      <input type="file" name="media" class="form-control" accept="image/*,video/*">
     </div>
     <div class="mb-3 row">
       <div class="col"><label class="form-label">Target makanan (0..3)</label><input type="number" name="target_makanan"
@@ -269,3 +339,4 @@ else:
 endif;
 
 include __DIR__ . '/../includes/footer.php';
+?>

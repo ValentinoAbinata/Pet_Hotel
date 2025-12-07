@@ -56,7 +56,48 @@ $u = current_user();
             </li>
 
           <?php else: // === JIKA LOGIN SEBAGAI ADMIN / DOKTER === ?>
+            <?php if ($u['peran'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Pet_Hotel/modules/staff.php">👨‍💼 Kelola Staf</a>
+                </li>
+            <?php endif; ?>
+            <?php if ($u): // === TAMPILKAN LONCENG JIKA LOGIN === ?>
+            <?php 
+              $unread = count_unread_notif($u['user_id']); 
+              $notif_list = get_my_notif($u['user_id']);
+            ?>
+            <li class="nav-item dropdown me-3">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                🔔 
+                <?php if($unread > 0): ?>
+                  <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem; position: relative; top: -10px; left: -5px;">
+                    <?= $unread ?>
+                  </span>
+                <?php endif; ?>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                <li><h6 class="dropdown-header">Notifikasi Anda</h6></li>
+                <?php if ($notif_list && $notif_list->num_rows > 0): ?>
+                    <?php while($n = $notif_list->fetch_assoc()): ?>
+                      <?php $bg = $n['status_baca'] == 0 ? 'bg-light' : ''; ?>
+                      <li class="<?= $bg ?>">
+                        <a class="dropdown-item" href="<?= htmlspecialchars($n['link_url']) ?>" style="white-space: normal;">
+                          <div class="d-flex justify-content-between">
+                            <strong><?= htmlspecialchars($n['judul']) ?></strong>
+                            <small class="text-muted" style="font-size:0.7rem"><?= date('d/m H:i', strtotime($n['created_at'])) ?></small>
+                          </div>
+                          <small class="text-muted"><?= htmlspecialchars($n['pesan']) ?></small>
+                        </a>
+                      </li>
+                      <li><hr class="dropdown-divider m-0"></li>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <li><div class="dropdown-item text-center text-muted py-3">Tidak ada notifikasi</div></li>
+                <?php endif; ?>
+              </ul>
+            </li>
 
+          <?php endif; ?>
             <li class="nav-item">
               <a class="nav-link" href="/Pet_Hotel/pages/logout.php">Logout
                 (<?= htmlspecialchars($u['nama_lengkap']) ?>)</a>
