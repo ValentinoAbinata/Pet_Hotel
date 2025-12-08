@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_login();
 $u = current_user();
 
+// Pastikan yang akses cuma customer
 if ($u['peran'] !== 'customer') {
     flash('Akses ditolak.');
     header('Location: /Pet_Hotel/pages/dashboard.php');
@@ -17,13 +18,14 @@ $action = $_GET['action'] ?? 'list';
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $errors = [];
 
+// --- LOGIKA SIMPAN RESERVASI BARU ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sub = $_POST['__action'] ?? '';
     if ($sub === 'create') {
         $hewan_id = (int) $_POST['hewan_id'];
         $checkin = $mysqli->real_escape_string($_POST['tanggal_checkin']);
         $checkout = $mysqli->real_escape_string($_POST['tanggal_checkout']);
-        $status = 'Pending'; // Reservasi baru dari pelanggan selalu Pending
+        $status = 'Pending'; 
 
         // Validasi: Pastikan hewan ini milik customer yang login
         $resHewan = $mysqli->query("SELECT hewan_id FROM hewan WHERE hewan_id = $hewan_id AND customer_id = $customer_id");
@@ -42,13 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($_POST['layanan']) && is_array($_POST['layanan'])) {
                     foreach ($_POST['layanan'] as $lid) {
                         $lid = (int) $lid;
-                        // Ambil harga asli dari layanan saat ini
                         $r = $mysqli->query("SELECT harga FROM layanan WHERE layanan_id = $lid LIMIT 1");
                         $harga = 0;
                         if ($r && $r->num_rows)
                             $harga = (int) $r->fetch_assoc()['harga'];
 
-                        // Simpan ke reservasi_layanan
                         $mysqli->query("INSERT INTO reservasi_layanan (reservasi_id,layanan_id,harga_saat_reservasi) 
                                         VALUES ($reservasi_id,$lid,$harga)");
                     }
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Ambil data untuk form
+// Ambil data untuk form dropdown
 $hewanRes = $mysqli->query("SELECT hewan_id,nama_hewan FROM hewan WHERE customer_id = $customer_id ORDER BY nama_hewan");
 $layananRes = $mysqli->query("SELECT * FROM layanan ORDER BY layanan_id");
 
@@ -73,17 +73,18 @@ include __DIR__ . '/../includes/header.php';
 <div class="reservasi-container">
     <?php
     $msg = get_flash();
-    if ($msg)
-        echo '<div class="alert alert-info">' . htmlspecialchars($msg) . '</div>';
-    foreach ($errors as $e)
-        echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
+    if ($msg) echo '<div class="alert alert-info">' . htmlspecialchars($msg) . '</div>';
+    foreach ($errors as $e) echo '<div class="alert alert-danger">' . htmlspecialchars($e) . '</div>';
 
     if ($action === 'list'):
-        // Query untuk mengambil riwayat reservasi PELANGGAN INI SAJA
-        $q = $mysqli->query("SELECT r.*, h.nama_hewan, SUM(rl.harga_saat_reservasi) as total_biaya 
+        // Query Reservasi
+        $q = $mysqli->query("SELECT r.*, h.nama_hewan, 
+                            SUM(rl.harga_saat_reservasi) as harga_per_hari, 
+                            p.status_pembayaran 
                             FROM reservasi r 
                             LEFT JOIN hewan h ON r.hewan_id = h.hewan_id 
                             LEFT JOIN reservasi_layanan rl ON r.reservasi_id = rl.reservasi_id 
+                            LEFT JOIN pembayaran p ON r.reservasi_id = p.reservasi_id
                             WHERE r.customer_id = $customer_id 
                             GROUP BY r.reservasi_id 
                             ORDER BY r.reservasi_id DESC");
@@ -96,7 +97,7 @@ include __DIR__ . '/../includes/header.php';
         <?php if ($q->num_rows > 0): ?>
             <div class="table-container">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -105,11 +106,26 @@ include __DIR__ . '/../includes/header.php';
                                 <th>Check-out</th>
                                 <th>Status</th>
                                 <th>Total Biaya</th>
-                                <th>Laporan</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while ($r = $q->fetch_assoc()): ?>
+                                <?php
+                                // --- PERBAIKAN HITUNG TOTAL BIAYA ---
+                                // 1. Hitung durasi hari
+                                $in = new DateTime($r['tanggal_checkin']);
+                                $out = new DateTime($r['tanggal_checkout']);
+                                $diff = $in->diff($out);
+                                $durasi = max(1, $diff->days); // Minimal 1 hari
+                                
+                                // 2. Ambil harga per hari (dari query SUM)
+                                $harga_dasar = (int)$r['harga_per_hari'];
+                                
+                                // 3. Kalikan
+                                $total_final = $harga_dasar * $durasi;
+                                // ------------------------------------
+                                ?>
                                 <tr>
                                     <td><?= $r['reservasi_id'] ?></td>
                                     <td><?= htmlspecialchars($r['nama_hewan']) ?></td>
@@ -126,11 +142,30 @@ include __DIR__ . '/../includes/header.php';
                                         echo "<span class=\"badge $badge\">$status</span>";
                                         ?>
                                     </td>
-                                    <td class="price">Rp<?= number_format((int) $r['total_biaya']) ?></td>
+                                    
+                                    <td class="price">
+                                        <strong>Rp<?= number_format($total_final) ?></strong><br>
+                                        <small class="text-muted" style="font-size: 0.75rem;">(<?= $durasi ?> Hari)</small>
+                                    </td>
+                                    
                                     <td>
-                                        <a href="monitoring.php?reservasi_id=<?= $r['reservasi_id'] ?>" class="btn btn-sm btn-info">
-                                            Lihat Laporan
-                                        </a>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <a href="monitoring.php?reservasi_id=<?= $r['reservasi_id'] ?>" class="btn btn-sm btn-info text-nowrap">
+                                                📊 Laporan
+                                            </a>
+
+                                            <?php if ($r['status_reservasi'] === 'Pending'): ?>
+                                                <?php if (empty($r['status_pembayaran'])): ?>
+                                                    <a href="bayar.php?id=<?= $r['reservasi_id'] ?>" class="btn btn-sm btn-warning text-nowrap">
+                                                        💸 Bayar
+                                                    </a>
+                                                <?php else: ?>
+                                                    <span class="badge bg-info text-dark text-nowrap">
+                                                        ⏳ Cek Pembayaran
+                                                    </span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
